@@ -13,10 +13,13 @@ public:
 	MOCK_METHOD(void, write, (long address, unsigned char data), (override));
 };
 
-TEST(DeviceDriver, ReadFromHW) {
+class DriverTestFixture : public testing::Test {
+public:
 	MockFlashMemory mock;
-	EXPECT_CALL(mock, read(0xBB)).Times(5);
+};
 
+TEST_F(DriverTestFixture, ReadFromHW) {
+	EXPECT_CALL(mock, read(0xBB)).Times(5);
 	DeviceDriver driver{ &mock };
 
 	try {
@@ -27,8 +30,7 @@ TEST(DeviceDriver, ReadFromHW) {
 	}
 }
 
-TEST(DeviceDriver, WritetoHW) {
-	MockFlashMemory mock;
+TEST_F(DriverTestFixture, WritetoHW) {
 	DeviceDriver driver{ &mock };
 	EXPECT_CALL(mock, read(0xBB)).WillRepeatedly(testing::Return(0xFF));
 	EXPECT_CALL(mock, write(0xBB, 0x00)).Times(1);
