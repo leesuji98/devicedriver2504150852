@@ -1,11 +1,14 @@
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "device_driver.h"
+#include "application.cpp"
 
 using std::string;
+using std::vector;
 
 class MockFlashMemory : public FlashMemoryDevice {
 public:
@@ -15,7 +18,7 @@ public:
 
 class DriverTestFixture : public testing::Test {
 public:
-	MockFlashMemory mock;
+	testing::NiceMock<MockFlashMemory> mock;
 };
 
 TEST_F(DriverTestFixture, ReadFromHW) {
@@ -43,7 +46,36 @@ TEST_F(DriverTestFixture, WritetoHW) {
 	}
 }
 
+TEST_F(DriverTestFixture, AppReadTest) {
+	EXPECT_CALL(mock, read(0x00)).WillRepeatedly(testing::Return(0x10));
+	EXPECT_CALL(mock, read(0x01)).WillRepeatedly(testing::Return(0x20));
+	EXPECT_CALL(mock, read(0x02)).WillRepeatedly(testing::Return(0x30));
+	EXPECT_CALL(mock, read(0x03)).WillRepeatedly(testing::Return(0x40));
+	EXPECT_CALL(mock, read(0x04)).WillRepeatedly(testing::Return(0x50));
+	
+	DeviceDriver driver{ &mock };
+	Application app{ &driver };
+	vector <int> actual = app.readAndPrint(0x00, 0x04);
+	vector <int> expected = { 0x10, 0x20, 0x30, 0x40, 0x50 };
+	
+	EXPECT_EQ(expected, actual);
+}
+
+TEST_F(DriverTestFixture, AppWriteTest) {
+	DeviceDriver driver{ &mock };
+	EXPECT_CALL(mock, read(0x00)).WillRepeatedly(testing::Return(0xFF));
+	EXPECT_CALL(mock, read(0x01)).WillRepeatedly(testing::Return(0xFF));
+	EXPECT_CALL(mock, read(0x02)).WillRepeatedly(testing::Return(0xFF));
+	EXPECT_CALL(mock, read(0x03)).WillRepeatedly(testing::Return(0xFF));
+	EXPECT_CALL(mock, read(0x04)).WillRepeatedly(testing::Return(0xFF));
+
+	Application app { &driver };
+	app.writeAll(0x00);
+}
+
 int main() {
+
+
 	::testing::InitGoogleMock();
 	return RUN_ALL_TESTS();
 }
