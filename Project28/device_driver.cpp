@@ -19,6 +19,8 @@ int DeviceDriver::read(long address)
 
 void DeviceDriver::write(long address, int data)
 {
-    // TODO: implement this method
+    unsigned char clearedData = 0xFF;
+    if (m_hardware->read(address) != clearedData)
+        throw std::runtime_error("data not clear");
     m_hardware->write(address, (unsigned char)data);
 }
